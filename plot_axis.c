@@ -22,7 +22,7 @@ void init_axis( t_plot_axis* axis, int dir ) {
         .number = -1,
         .dir = 1,
         .thick = 0.01,
-        .len = 0.05,
+        .len = 0.01,
         .color = (t_color) {.r=0,.g=0, .b=0, .a=1}
     };
 
@@ -30,7 +30,7 @@ void init_axis( t_plot_axis* axis, int dir ) {
         .number = -1,
         .dir = 1,
         .thick = 0.005,
-        .len = 0.025,
+        .len = 0.005,
         .color = (t_color) {.r=0,.g=0, .b=0, .a=0.5}
     };
 }
@@ -41,7 +41,7 @@ void init_axis( t_plot_axis* axis, int dir ) {
  * @param   interval    Interval between major tick marks
  * @param   ia          Integer index of the first tick mark
  */
-void tick_interval( t_plot_axis* axis, double* interval, int64_t* ia ) {
+void tick_interval( t_plot_axis* axis, double* interval, int64_t* ia, int* nminticks ) {
     
     double const delta = axis->max - axis->min;
     *interval = pow(10.0, floor( log10(delta) ));
@@ -50,9 +50,14 @@ void tick_interval( t_plot_axis* axis, double* interval, int64_t* ia ) {
     switch(s) {
     case 2:
         *interval *= 0.5;
+        *nminticks = 4;
         break;
     case 1:
         *interval *= 0.2;
+        *nminticks = 3;
+        break;
+    default:
+        *nminticks = 9;
     }
 
     *ia = floor(axis->min / *interval);
@@ -86,7 +91,8 @@ void draw_axis( t_plot_axis* axis, t_plot_area *area, cairo_t *cr ){
 
     int64_t ia;
     double interval;
-    tick_interval( axis, &interval, &ia);
+    int nminticks;
+    tick_interval( axis, &interval, &ia, &nminticks);
 
     cairo_select_font_face (cr, "Lato", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL );
     cairo_set_font_size (cr, 0.03 );
@@ -101,8 +107,8 @@ void draw_axis( t_plot_axis* axis, t_plot_area *area, cairo_t *cr ){
             double value = i * interval;
             double pos = area -> x0 + scale_axis( axis, value ) * length;
 
-            cairo_move_to( cr, pos, area -> y1 + 0.01);
-            cairo_line_to( cr, pos, area -> y1 - 0.01);
+            cairo_move_to( cr, pos, area -> y1 + axis -> major.len );
+            cairo_line_to( cr, pos, area -> y1 - axis -> major.len);
             cairo_stroke(cr);
 
             char str[32];
@@ -115,6 +121,22 @@ void draw_axis( t_plot_axis* axis, t_plot_area *area, cairo_t *cr ){
             cairo_show_text(cr, str);
         }
 
+        // minor tick marks
+        for( int64_t i = ia-1; i * interval < axis -> max; i++ ) {
+            double majorval = i * interval;
+            for( int j = 1; j <= nminticks; j++ ) {
+                double minorval = majorval + j * interval / (nminticks+1);                
+                if ( minorval >= axis -> max ) {
+                    break;
+                } else if ( minorval > axis -> min ) {
+                    double pos = area -> x0 + scale_axis( axis, minorval ) * length;
+
+                    cairo_move_to( cr, pos, area -> y1 + axis -> minor.len );
+                    cairo_line_to( cr, pos, area -> y1 - axis -> minor.len);
+                    cairo_stroke(cr);
+                }
+            }
+        }
     }
     break;
     case 1: {
@@ -135,6 +157,23 @@ void draw_axis( t_plot_axis* axis, t_plot_area *area, cairo_t *cr ){
                 area -> x0 - te.width - te.x_bearing - 0.02, 
                 pos - te.height / 2 - te.y_bearing);
             cairo_show_text(cr, str);
+        }
+
+        // minor tick marks
+        for( int64_t i = ia-1; i * interval < axis -> max; i++ ) {
+            double majorval = i * interval;
+            for( int j = 1; j <= nminticks; j++ ) {
+                double minorval = majorval + j * interval / (nminticks+1);                
+                if ( minorval >= axis -> max ) {
+                    break;
+                } else if ( minorval > axis -> min ) {
+                    double pos = area -> y1 - scale_axis( axis, minorval ) * length;
+
+                    cairo_move_to( cr, area -> x0 - axis -> minor.len, pos );
+                    cairo_line_to( cr, area -> x0 + axis -> minor.len, pos );
+                    cairo_stroke(cr);
+                }
+            }
         }
     }
     break;
