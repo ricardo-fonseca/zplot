@@ -134,6 +134,15 @@ void draw_colormap( t_plot_colormap* colormap, t_plot_area *area, t_plot_axis ax
     // Set transparency values
     set_opacity( colormap, img );
 
+    // Reverse image vertically
+    int stride = colormap -> xdim;
+    for( int j = 0; j < colormap -> ydim / 2; j++ )
+        for( int i = 0; i < colormap -> xdim; i++ ) {
+            t_argb const point = img[ j*stride + i ];
+            img[ j*stride + i ] = img[ (colormap -> ydim - 1 - j)*stride + i ] ;
+            img[ (colormap -> ydim - 1 - j)*stride + i ] = point;
+        }
+
     // Create cairo image
     cairo_save( cr );
 
@@ -144,7 +153,8 @@ void draw_colormap( t_plot_colormap* colormap, t_plot_area *area, t_plot_axis ax
     cairo_rectangle( cr, area->x0, area->y0, sx, sy );
     cairo_clip(cr);
 
-    int stride = cairo_format_stride_for_width (
+    // Get image stride (depends on internal format)
+    stride = cairo_format_stride_for_width (
         CAIRO_FORMAT_ARGB32,
         colormap -> xdim);
 
