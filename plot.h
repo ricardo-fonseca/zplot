@@ -8,6 +8,8 @@
 #include "plot_data.h"
 #include "plot_series.h"
 #include "plot_colormap.h"
+#include "plot_polygon.h"
+#include "plot_contour.h"
 
 
 typedef struct {

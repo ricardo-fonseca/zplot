@@ -168,7 +168,6 @@ void draw_axis( t_plot_axis* axis, t_plot_area *area, cairo_t *cr ){
                     break;
                 } else if ( minorval > axis -> min ) {
                     double pos = area -> y1 - scale_axis( axis, minorval ) * length;
-
                     cairo_move_to( cr, area -> x0 - axis -> minor.len, pos );
                     cairo_line_to( cr, area -> x0 + axis -> minor.len, pos );
                     cairo_stroke(cr);

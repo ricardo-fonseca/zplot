@@ -43,7 +43,9 @@ void series2( t_plot * plot ) {
     s2.y = ys2;
     s2.np = 50;
 
+    s2.lineColor = (t_color) {.r=0.1,.g=0.7,.b=.1,.a=0.8};
     s2.symbolStyle = CIRCLE;
+    s2.symbolColor = (t_color) {.r=0.1,.g=0.7,.b=.1,.a=1.0};
 
     add_series( &s2, & plot -> data);
 
@@ -82,9 +84,81 @@ void colormap( t_plot * plot ) {
     cm.opacityRange[0] = 0;
     cm.opacityRange[1] = 0.4;
 
-    add_colormap( &cm, & plot -> data);
-
+    add_colormap( &cm, &plot -> data);
 }
+
+t_plot_polygon poly;
+t_pointlist pos;
+
+void polygon( t_plot * plot ) {
+    init_polygon( &poly );
+
+    add_pointlist( &pos, -1.0, 0.0 );
+    add_pointlist( &pos, +1.0, 0.0 );
+    add_pointlist( &pos,  0.0, 1.0 );
+
+    poly.pos = &pos;
+    poly.closed = 1;
+
+    poly.style = 3;
+    poly.fillColor = (t_color) {.r=0.8,.g=0.2,.b=0.1,.a=0.6};
+
+    add_polygon( &poly, & plot -> data);
+}
+
+t_plot_contour ctr;
+double ctr_values[16];
+double z2[64*64];
+
+void contour( t_plot * plot ) {
+
+    for( int j = 0; j < 64; j++ ) {
+        double y = j/63.0;
+        for( int i = 0; i < 64; i++ ) {
+            double x = -1 + 2 * i/63.0;
+            z2[j*64 + i] = y*y+x*x;
+        }
+    }
+
+    // Draw a colormap below for reference
+    init_colormap( &cm );
+    cm.data = z2;
+    cm.xdim = 64;
+    cm.ydim = 64;
+
+    cm.x0 = -1;
+    cm.x1 = +1;
+
+    cm.y0 = 0;
+    cm.y1 = +1;
+
+    cm.coloraxis.axis.min = 0;
+    cm.coloraxis.axis.max = +1;
+    cm.coloraxis.palette.id = HALINE;
+    add_colormap( &cm, &plot -> data);
+
+    for( int i = 0; i < 16; i++ ) {
+        ctr_values[i] =  (i+1)*2.0/17;
+    }
+
+    init_contour( &ctr );
+
+    ctr.data = z2;
+    ctr.xdim = 64;
+    ctr.ydim = 64;
+
+    ctr.x0 = -1;
+    ctr.x1 = +1;
+
+    ctr.y0 = 0;
+    ctr.y1 = +1;
+
+    ctr.values = ctr_values;
+    ctr.nvalues = 16;
+
+    add_contour( &ctr, & plot -> data);
+}
+
 
 int main (int argc, char *argv[])
 {
@@ -103,9 +177,12 @@ int main (int argc, char *argv[])
     plot.axis[1].max = 1.1;
 
     // Plot data
-    series1( &plot );
-    colormap( &plot );
-    series2( &plot );
+    //series1( &plot );
+    //colormap( &plot );
+    //series2( &plot );
+
+    // polygon( &plot );
+    contour( &plot );
 
 
     // Create surface
